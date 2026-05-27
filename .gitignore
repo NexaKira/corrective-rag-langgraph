@@ -1,0 +1,18 @@
+# 虚拟环境
+/langgraph_env
+
+# 环境变量
+.env
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 测试
+/demo
+
+# 文档
+/documents
+
+# Chroma 向量数据库
+data/chroma_db/
