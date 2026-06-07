@@ -16,3 +16,6 @@ __pycache__/
 
 # Chroma 向量数据库
 data/chroma_db/
+
+# 二进制缓存
+data/bm25_index.pkl
