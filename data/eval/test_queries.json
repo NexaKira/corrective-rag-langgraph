@@ -1,0 +1,62 @@
+[
+  {
+    "query": "蓝牙耳机怎么配对",
+    "relevant_docs": ["doc_001.txt"]
+  },
+  {
+    "query": "智能手表电池能用多久",
+    "relevant_docs": ["doc_002.txt"]
+  },
+  {
+    "query": "台灯色温怎么调",
+    "relevant_docs": ["doc_003.txt"]
+  },
+  {
+    "query": "路由器默认密码是多少",
+    "relevant_docs": ["doc_004.txt"]
+  },
+  {
+    "query": "扫地机器人怎么建图",
+    "relevant_docs": ["doc_005.txt"]
+  },
+  {
+    "query": "电子书阅读器支持什么格式",
+    "relevant_docs": ["doc_006.txt"]
+  },
+  {
+    "query": "智能门锁没电了怎么办",
+    "relevant_docs": ["doc_007.txt"]
+  },
+  {
+    "query": "空气净化器滤芯多久换一次",
+    "relevant_docs": ["doc_008.txt"]
+  },
+  {
+    "query": "65W充电器能充iPhone吗",
+    "relevant_docs": ["doc_009.txt"]
+  },
+  {
+    "query": "智能音箱怎么连蓝牙",
+    "relevant_docs": ["doc_010.txt"]
+  },
+  {
+    "query": "摄像头怎么开启隐私模式",
+    "relevant_docs": ["doc_012.txt"]
+  },
+  {
+    "query": "机械键盘红轴和青轴有什么区别",
+    "relevant_docs": ["doc_014.txt"]
+  },
+  {
+    "query": "咖啡机怎么打奶泡",
+    "relevant_docs": ["doc_017.txt"]
+  },
+  {
+    "query": "电饭煲煮粥米水比例是多少",
+    "relevant_docs": ["doc_021.txt"]
+  },
+  {
+    "query": "取暖器耗电吗",
+    "relevant_docs": ["doc_019.txt"]
+  }
+]

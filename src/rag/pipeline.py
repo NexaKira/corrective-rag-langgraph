@@ -8,6 +8,7 @@ RAG Pipeline：串联搜索 -> 拼 prompt -> 调用 LLM 生成答案
 import os
 from dotenv import load_dotenv
 
+from src.reranker.cross_encoder import rerank
 from src.retrieval.fusion import multi_search
 load_dotenv()
 from openai import OpenAI
@@ -52,7 +53,12 @@ def _build_messages(query: str, docs: list[dict]) -> list[dict]:
 def rag_pipeline(query: str, k: int = 3):
     # 1.检索
     #docs = retrieve_docs(query, k)
-    docs = multi_search(query, k)
+
+    #第一步：多路召回（BM25 + 向量）-> RRF融合
+    candidates = multi_search(query, k)
+
+    #第二步：Cross-Encoder 精排 -> 取 Top-K
+    docs = rerank(query, candidates, top_k=k)
 
     # 2.拼 prompt
     messages = _build_messages(query, docs)
