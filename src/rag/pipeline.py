@@ -7,6 +7,8 @@ RAG Pipeline：串联搜索 -> 拼 prompt -> 调用 LLM 生成答案
 
 import os
 from dotenv import load_dotenv
+
+from src.retrieval.fusion import multi_search
 load_dotenv()
 from openai import OpenAI
 from src.retrieval.vector import retrieve_docs
@@ -49,7 +51,8 @@ def _build_messages(query: str, docs: list[dict]) -> list[dict]:
 # 对外暴露的唯一接口
 def rag_pipeline(query: str, k: int = 3):
     # 1.检索
-    docs = retrieve_docs(query, k)
+    #docs = retrieve_docs(query, k)
+    docs = multi_search(query, k)
 
     # 2.拼 prompt
     messages = _build_messages(query, docs)
