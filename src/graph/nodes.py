@@ -26,7 +26,7 @@ def _get_llm():
     if _llm is None:
         _llm = OpenAI(
             api_key=os.getenv("DEEPSEEK_API_KEY"),
-            base_url="https://api.deepseek.com/v1",
+            base_url="https://api.deepseek.com",
         )
     return _llm
 
@@ -34,7 +34,7 @@ def _get_llm():
 def _call_llm(system_prompt: str, user_prompt: str) -> str:
     client = _get_llm()
     response = client.chat.completions.create(
-        model="deepseek-chat",
+        model="deepseek-v4-flash",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -229,3 +229,112 @@ def generate_node(state: dict) -> dict:
     print(f"  {'─'*40}")
 
     return {"answer": answer}
+
+# ============================================================
+# Phase 4 新增节点: plan, tool, agent_answer
+# ============================================================
+
+from src.tools.registry import register_default_tools, get_tool, build_tools_prompt
+
+PLAN_PROMPT = """你是一个智能 Agent 调度器。根据用户问题，判断应该走哪条路。
+
+## 可用工具
+{tools_list}
+
+## 你的决策选项
+
+1. 需要**数学计算** → 返回:
+{{"action": "tool", "tool_name": "calculator", "tool_input": {{"expression": "表达式"}}, "reason": "原因"}}
+
+2. 需要**搜索互联网**获取最新信息 → 返回:
+{{"action": "tool", "tool_name": "web_search", "tool_input": {{"query": "搜索词"}}, "reason": "原因"}}
+
+3. 需要**查询内部知识库**（产品规格、使用说明等） → 返回:
+{{"action": "knowledge", "reason": "原因"}}
+
+4. 简单闲聊、问候 → 返回:
+{{"action": "answer", "reason": "原因"}}
+
+只输出 JSON，不要输出其他内容。"""
+
+
+def plan_node(state: dict) -> dict:
+    """Agent 决策节点：分析意图，输出下一步行动"""
+    query = state["original_query"]
+    tool_history = state.get("tool_history", [])
+
+    print(f"\n{'='*40}")
+    print(f"  🧠 [Agent 规划] 分析: {query}")
+
+    tool_context = ""
+    if tool_history:
+        tool_context = "\n\n之前的工具调用结果:\n"
+        for t in tool_history:
+            tool_context += f"- {t['tool']}: {t['input']} → {t['output'][:300]}\n"
+
+    tools_desc = build_tools_prompt()
+    system_prompt = PLAN_PROMPT.replace("{tools_list}", tools_desc)
+
+    user_prompt = f"用户问题: {query}{tool_context}\n请决策。"
+    result_text = _call_llm(system_prompt, user_prompt)
+    result = _parse_json(result_text)
+
+    action = result.get("action", "answer")
+    print(f"  🎯 决策: {action}")
+    if action == "tool":
+        print(f"    工具: {result.get('tool_name')}, 参数: {result.get('tool_input')}")
+    print(f"  💬 {result.get('reason', '')}")
+
+    return {
+        "_plan_action": action,
+        "_plan_tool_name": result.get("tool_name", ""),
+        "_plan_tool_input": result.get("tool_input", {}),
+    }
+
+
+def tool_node(state: dict) -> dict:
+    """执行工具"""
+    tool_name = state.get("_plan_tool_name", "")
+    tool_input = state.get("_plan_tool_input", {})
+    tool_round = state.get("tool_round", 0) + 1
+
+    print(f"\n  🔧 [执行工具] {tool_name}")
+    print(f"  📥 输入: {tool_input}")
+
+    tool = get_tool(tool_name)
+    if not tool:
+        output = f"错误: 未知工具 '{tool_name}'"
+    elif tool.is_dangerous:
+        print(f"\n  ⚠️  [安全门禁] '{tool_name}' 是危险操作！")
+        confirm = input("  🛑 确认执行? (y/n): ").strip().lower()
+        output = tool.execute(**tool_input) if confirm == "y" else f"用户取消了 '{tool_name}'"
+    else:
+        output = tool.execute(**tool_input)
+
+    print(f"  📤 结果: {str(output)[:200]}")
+
+    new_history = state.get("tool_history", []) + [{
+        "tool": tool_name, "input": str(tool_input), "output": output,
+    }]
+
+    return {"tool_history": new_history, "tool_round": tool_round}
+
+
+def agent_answer_node(state: dict) -> dict:
+    """直接回答（闲聊/无需知识库的问题）"""
+    query = state["original_query"]
+    tool_history = state.get("tool_history", [])
+
+    tool_text = ""
+    if tool_history:
+        tool_text = "额外信息:\n" + "\n".join(
+            [f"- {t['tool']}: {t['output'][:300]}" for t in tool_history]
+        )
+
+    answer = _call_llm(
+        "你是一个友好的 AI 助手。用中文回答。",
+        f"{tool_text}\n用户问题: {query}\n请回答:",
+    )
+
+    return {"answer": answer}
+

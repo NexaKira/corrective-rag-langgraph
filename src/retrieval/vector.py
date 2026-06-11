@@ -65,7 +65,8 @@ def retrieve_docs(query: str, k: int=3):
     for doc, score in results:
         docs.append({
             "content":doc.page_content,
-            "source":doc.metadata.get("source", "unknown")
+            "source":doc.metadata.get("source", "unknown"),
+            "score":float(score)
         })
 
     return docs
@@ -81,6 +82,6 @@ if __name__ == "__main__":
     docs = retrieve_docs(query, k=3)
 
     for i, doc in enumerate(docs, 1):
-        print(f"--- 结果 {i} (来源: {doc['source']}) ---")
+        print(f"--- 结果 {i} (来源: {doc['source']}，分数：{doc['score']:.2f}) ---")
         print(doc["content"][:200] + "...")
         print()
